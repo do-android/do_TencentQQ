@@ -1,0 +1,10 @@
+*.class
+*.apk
+bin/
+gen/
+.settings/
+proguard/
+*.classpath
+/doExt_do_TencentQQ/do_TencentQQ.zip
+/doExt_do_TencentQQ/do_build.xml
+/doExt_do_TencentQQ/libs/docore.jar
