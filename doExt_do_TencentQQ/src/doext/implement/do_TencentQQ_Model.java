@@ -238,9 +238,17 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 			_scriptEngine.callback(_callbackFuncName, _invokeResult);
 		}
 	}
-
+	
 	@Override
 	public void shareToQQ(DoJsonNode _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+		String _appId = _dictParas.getOneText("appId", "");
+		if (TextUtils.isEmpty(_appId))
+			throw new Exception("appId 不能为空");
+		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
+		if (mTencent == null) {
+			mTencent = Tencent.createInstance(_appId, _activity.getApplicationContext());
+		}
+		
 		int _shareType = _dictParas.getOneInteger("type", 0); // 分享的类型  0：默认，图文分享；1：纯图分享，只支持本地图；2：音乐分享；3：应用分享
 		String _title = _dictParas.getOneText("title", ""); //标题  分享的标题, 最长30个字符
 		String _targetUrl = _dictParas.getOneText("url", "");    //目标地址  分享后点击文本后打开的地址
@@ -252,6 +260,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		if(TextUtils.isEmpty(_title)){
 			_title = "share title";
 		}
+		
 		
 		final Bundle params = new Bundle();
 		switch (_shareType) {
@@ -300,7 +309,6 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		}
 		params.putString(QQShare.SHARE_TO_QQ_APP_NAME, _appName);
 		
-		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
 		// QQ分享要在主线程做
 		ThreadManager.getMainHandler().post(new Runnable() {
 			@Override
@@ -357,6 +365,14 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	 
 	@Override
 	public void shareToQzone(DoJsonNode _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+		String _appId = _dictParas.getOneText("appId", "");
+		if (TextUtils.isEmpty(_appId))
+			throw new Exception("appId 不能为空");
+		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
+		if (mTencent == null) {
+			mTencent = Tencent.createInstance(_appId, _activity.getApplicationContext());
+		}
+		
 		int _shareType = _dictParas.getOneInteger("type", 0); // 分享的类型  0：默认，图文分享；1：应用分享
 		String _title = _dictParas.getOneText("title", ""); //标题  分享的标题, 最长200个字符
 		String _targetUrl = _dictParas.getOneText("url", "");    //目标地址  分享后点击文本后打开的地址
@@ -389,7 +405,6 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, _images);
 		params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, _summary);
 		
-		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
 		// QZone分享要在主线程做
 		ThreadManager.getMainHandler().post(new Runnable() {
 			@Override
