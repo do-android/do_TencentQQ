@@ -1,17 +1,24 @@
 package doext.implement;
 
+import java.util.ArrayList;
+
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.tencent.connect.UserInfo;
+import com.tencent.connect.share.QQShare;
+import com.tencent.connect.share.QzoneShare;
+import com.tencent.open.utils.ThreadManager;
 import com.tencent.tauth.IUiListener;
 import com.tencent.tauth.Tencent;
 import com.tencent.tauth.UiError;
 
 import core.DoServiceContainer;
+import core.helper.DoIOHelper;
 import core.helper.jsonparse.DoJsonNode;
 import core.interfaces.DoIScriptEngine;
 import core.object.DoInvokeResult;
@@ -224,5 +231,167 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		} finally {
 			_scriptEngine.callback(_callbackFuncName, _invokeResult);
 		}
+	}
+
+	@Override
+	public void shareToQQ(DoJsonNode _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+		int _shareType = _dictParas.getOneInteger("type", 0); // 分享的类型  0：默认，图文分享；1：纯图分享，只支持本地图；2：音乐分享；3：应用分享
+		String _title = _dictParas.getOneText("title", ""); //标题  分享的标题, 最长30个字符
+		String _targetUrl = _dictParas.getOneText("url", "");    //目标地址  分享后点击文本后打开的地址
+		String _imageUrl = _dictParas.getOneText("image", "");  //图片地址  分享后显示的图片
+		String _summary = _dictParas.getOneText("summary", "");   //摘要  分享的消息摘要，最长40个字
+		String _audioUrl = _dictParas.getOneText("audioUrl", "");  //音乐文件的远程链接   音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
+		String _appName = _dictParas.getOneText("appName", "");    //应用名称
+		
+		if(TextUtils.isEmpty(_title)){
+			_title = "share title";
+		}
+		
+		final Bundle params = new Bundle();
+		switch (_shareType) {
+		case 1:
+			params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_IMAGE);
+			if (null == DoIOHelper.getHttpUrlPath(_imageUrl)) {
+				_imageUrl = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), _imageUrl);
+			}else{
+				throw new Exception("纯图分享，只支持选择本地图片");
+			}
+		    if(TextUtils.isEmpty(_imageUrl)){
+		    	throw new Exception("纯图分享，图片不能为空");
+			}
+			params.putString(QQShare.SHARE_TO_QQ_IMAGE_LOCAL_URL, _imageUrl);
+			break;
+		case 2:
+			params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_AUDIO);
+			params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, checkUrl(_targetUrl)); // 必须是http://开头
+			params.putString(QQShare.SHARE_TO_QQ_AUDIO_URL, checkUrl(_audioUrl));
+			params.putString(QQShare.SHARE_TO_QQ_TITLE, _title);
+			params.putString(QQShare.SHARE_TO_QQ_SUMMARY, _summary);
+			if (null == DoIOHelper.getHttpUrlPath(_imageUrl)) {
+				_imageUrl = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), _imageUrl);
+			}
+			params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, _imageUrl);
+			break;
+		case 3:
+			params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_APP);
+			params.putString(QQShare.SHARE_TO_QQ_TITLE, _title);
+			params.putString(QQShare.SHARE_TO_QQ_SUMMARY,_summary);
+			if (null == DoIOHelper.getHttpUrlPath(_imageUrl)) {
+				_imageUrl = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), _imageUrl);
+			}
+			params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, _imageUrl);
+			break;
+		default:
+			params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
+			params.putString(QQShare.SHARE_TO_QQ_TITLE, _title);
+			params.putString(QQShare.SHARE_TO_QQ_TARGET_URL, checkUrl(_targetUrl)); // 必须是http://开头
+			params.putString(QQShare.SHARE_TO_QQ_SUMMARY, _summary);
+			if (null == DoIOHelper.getHttpUrlPath(_imageUrl)) {
+				_imageUrl = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), _imageUrl);
+			}
+			params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, _imageUrl);
+			break;
+		}
+		params.putString(QQShare.SHARE_TO_QQ_APP_NAME, _appName);
+		
+		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
+		// QQ分享要在主线程做
+		ThreadManager.getMainHandler().post(new Runnable() {
+			@Override
+			public void run() {
+				if (null != mTencent) {
+					params.putInt(QQShare.SHARE_TO_QQ_EXT_INT, QQShare.SHARE_TO_QQ_FLAG_QZONE_ITEM_HIDE);
+					mTencent.shareToQQ(_activity, params, new QQShareListener(_scriptEngine, _callbackFuncName));
+				}
+			}
+		});
+	}
+	
+	
+	private String checkUrl(String _targetUrl) throws Exception{
+		if(TextUtils.isEmpty(_targetUrl)){
+			return "http://www.deviceone.net";
+		}
+		if(null == DoIOHelper.getHttpUrlPath(_targetUrl)){ //没有包含http:// 开头
+			_targetUrl = "http://" + _targetUrl;
+		}
+		return _targetUrl;
+	}
+	
+	
+	private class QQShareListener implements IUiListener{
+		
+		private DoIScriptEngine scriptEngine;
+		private String callbackFuncName;
+		private DoInvokeResult invokeResult;
+
+		public QQShareListener(DoIScriptEngine _scriptEngine, String _callbackFuncName) {
+			this.scriptEngine = _scriptEngine;
+			this.callbackFuncName = _callbackFuncName;
+			invokeResult = new DoInvokeResult(do_TencentQQ_Model.this.getUniqueKey());
+		}
+
+		@Override
+		public void onCancel() {
+	
+		}
+
+		@Override
+		public void onComplete(Object arg0) {
+			invokeResult.setResultBoolean(true);
+			scriptEngine.callback(callbackFuncName, invokeResult);
+		}
+
+		@Override
+		public void onError(UiError arg0) {
+			invokeResult.setResultBoolean(false);
+			scriptEngine.callback(callbackFuncName, invokeResult);
+		}
+	}
+	 
+	@Override
+	public void shareToQzone(DoJsonNode _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+		int _shareType = _dictParas.getOneInteger("type", 0); // 分享的类型  0：默认，图文分享；1：应用分享
+		String _title = _dictParas.getOneText("title", ""); //标题  分享的标题, 最长200个字符
+		String _targetUrl = _dictParas.getOneText("url", "");    //目标地址  分享后点击文本后打开的地址
+		String _imageUrl = _dictParas.getOneText("image", "");  //图片地址  分享后显示的图片
+		String _summary = _dictParas.getOneText("summary", "");   //摘要  分享的消息摘要，最长600个字
+		
+		if(TextUtils.isEmpty(_title)){
+			_title = "share title";
+		}
+		final Bundle params = new Bundle();
+		switch (_shareType) {
+		case 1:
+			params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzoneShare.SHARE_TO_QZONE_TYPE_APP);
+			break;
+		default:
+			params.putInt(QzoneShare.SHARE_TO_QZONE_KEY_TYPE, QzoneShare.SHARE_TO_QZONE_TYPE_IMAGE_TEXT);
+			break;
+		}
+		
+		params.putString(QzoneShare.SHARE_TO_QQ_TITLE, _title);
+		params.putString(QzoneShare.SHARE_TO_QQ_TARGET_URL, checkUrl(_targetUrl));
+		ArrayList<String> _images = new ArrayList<String>();
+		if (null == DoIOHelper.getHttpUrlPath(_imageUrl)) {
+			_imageUrl = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), _imageUrl);
+		}
+	    if(TextUtils.isEmpty(_imageUrl)){
+	    	throw new Exception("分享的图片不能为空");
+		}
+		_images.add(_imageUrl);
+		params.putStringArrayList(QzoneShare.SHARE_TO_QQ_IMAGE_URL, _images);
+		params.putString(QzoneShare.SHARE_TO_QQ_SUMMARY, _summary);
+		
+		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
+		// QZone分享要在主线程做
+		ThreadManager.getMainHandler().post(new Runnable() {
+			@Override
+			public void run() {
+				if (null != mTencent) {
+					mTencent.shareToQzone(_activity, params, new QQShareListener(_scriptEngine, _callbackFuncName));
+				}
+			}
+		});
 	}
 }
