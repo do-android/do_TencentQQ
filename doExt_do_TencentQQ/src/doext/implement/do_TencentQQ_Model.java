@@ -80,6 +80,12 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		} else if ("logout".equals(_methodName)) {
 			this.logout(_dictParas, _scriptEngine, _callbackFuncName);
 			return true;
+		}else if ("shareToQQ".equals(_methodName)) {
+			this.shareToQQ(_dictParas, _scriptEngine, _callbackFuncName);
+			return true;
+		}else if ("shareToQzone".equals(_methodName)) {
+			this.shareToQzone(_dictParas, _scriptEngine, _callbackFuncName);
+			return true;
 		}
 		return super.invokeAsyncMethod(_methodName, _dictParas, _scriptEngine, _callbackFuncName);
 	}
