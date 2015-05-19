@@ -19,7 +19,7 @@ import com.tencent.tauth.UiError;
 
 import core.DoServiceContainer;
 import core.helper.DoIOHelper;
-import core.helper.jsonparse.DoJsonNode;
+import core.helper.DoJsonHelper;
 import core.interfaces.DoIScriptEngine;
 import core.object.DoInvokeResult;
 import core.object.DoSingletonModule;
@@ -51,7 +51,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	 * @_invokeResult 用于返回方法结果对象
 	 */
 	@Override
-	public boolean invokeSyncMethod(String _methodName, DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, DoInvokeResult _invokeResult) throws Exception {
+	public boolean invokeSyncMethod(String _methodName, JSONObject _dictParas, DoIScriptEngine _scriptEngine, DoInvokeResult _invokeResult) throws Exception {
 		// ...do something
 		return super.invokeSyncMethod(_methodName, _dictParas, _scriptEngine, _invokeResult);
 	}
@@ -70,7 +70,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	 *                    DoInvokeResult(this.getUniqueKey());
 	 */
 	@Override
-	public boolean invokeAsyncMethod(String _methodName, DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
+	public boolean invokeAsyncMethod(String _methodName, JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
 		if ("login".equals(_methodName)) {
 			this.login(_dictParas, _scriptEngine, _callbackFuncName);
 			return true;
@@ -98,10 +98,10 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	 * @_callbackFuncName 回调函数名
 	 */
 	@Override
-	public void getUserInfo(DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
-		String _token = _dictParas.getOneText("token", "");
-		String _expires = _dictParas.getOneText("expires", "");
-		String _openId = _dictParas.getOneText("openId", "");
+	public void getUserInfo(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
+		String _token = DoJsonHelper.getString(_dictParas,"token", "");
+		String _expires = DoJsonHelper.getString(_dictParas,"expires", "");
+		String _openId = DoJsonHelper.getString(_dictParas,"openId", "");
 		Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
 		if (mTencent != null && mTencent.isSessionValid() && !TextUtils.isEmpty(_token) && !TextUtils.isEmpty(_expires) && !TextUtils.isEmpty(_openId)) {
 			mTencent.setAccessToken(_token, _expires);
@@ -163,8 +163,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	 * @_callbackFuncName 回调函数名
 	 */
 	@Override
-	public void login(DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
-		String _appId = _dictParas.getOneText("appId", "");
+	public void login(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
+		String _appId = DoJsonHelper.getString(_dictParas,"appId", "");
 		if (TextUtils.isEmpty(_appId))
 			throw new Exception("appId 不能为空");
 		Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
@@ -226,7 +226,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	 * @_invokeResult 用于返回方法结果对象
 	 */
 	@Override
-	public void logout(DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) {
+	public void logout(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) {
 		DoInvokeResult _invokeResult = new DoInvokeResult(do_TencentQQ_Model.this.getUniqueKey());
 		try {
 			Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
@@ -240,8 +240,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	}
 	
 	@Override
-	public void shareToQQ(DoJsonNode _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
-		String _appId = _dictParas.getOneText("appId", "");
+	public void shareToQQ(JSONObject _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+		String _appId = DoJsonHelper.getString(_dictParas,"appId", "");
 		if (TextUtils.isEmpty(_appId))
 			throw new Exception("appId 不能为空");
 		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
@@ -249,13 +249,13 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 			mTencent = Tencent.createInstance(_appId, _activity.getApplicationContext());
 		}
 		
-		int _shareType = _dictParas.getOneInteger("type", 0); // 分享的类型  0：默认，图文分享；1：纯图分享，只支持本地图；2：音乐分享；3：应用分享
-		String _title = _dictParas.getOneText("title", ""); //标题  分享的标题, 最长30个字符
-		String _targetUrl = _dictParas.getOneText("url", "");    //目标地址  分享后点击文本后打开的地址
-		String _imageUrl = _dictParas.getOneText("image", "");  //图片地址  分享后显示的图片
-		String _summary = _dictParas.getOneText("summary", "");   //摘要  分享的消息摘要，最长40个字
-		String _audioUrl = _dictParas.getOneText("audioUrl", "");  //音乐文件的远程链接   音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
-		String _appName = _dictParas.getOneText("appName", "");    //应用名称
+		int _shareType = DoJsonHelper.getInt(_dictParas,"type", 0); // 分享的类型  0：默认，图文分享；1：纯图分享，只支持本地图；2：音乐分享；3：应用分享
+		String _title = DoJsonHelper.getString(_dictParas,"title", ""); //标题  分享的标题, 最长30个字符
+		String _targetUrl = DoJsonHelper.getString(_dictParas,"url", "");    //目标地址  分享后点击文本后打开的地址
+		String _imageUrl = DoJsonHelper.getString(_dictParas,"image", "");  //图片地址  分享后显示的图片
+		String _summary = DoJsonHelper.getString(_dictParas,"summary", "");   //摘要  分享的消息摘要，最长40个字
+		String _audioUrl = DoJsonHelper.getString(_dictParas,"audioUrl", "");  //音乐文件的远程链接   音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
+		String _appName = DoJsonHelper.getString(_dictParas,"appName", "");    //应用名称
 		
 		if(TextUtils.isEmpty(_title)){
 			_title = "share title";
@@ -364,8 +364,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	}
 	 
 	@Override
-	public void shareToQzone(DoJsonNode _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
-		String _appId = _dictParas.getOneText("appId", "");
+	public void shareToQzone(JSONObject _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+		String _appId = DoJsonHelper.getString(_dictParas,"appId", "");
 		if (TextUtils.isEmpty(_appId))
 			throw new Exception("appId 不能为空");
 		final Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
@@ -373,11 +373,11 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 			mTencent = Tencent.createInstance(_appId, _activity.getApplicationContext());
 		}
 		
-		int _shareType = _dictParas.getOneInteger("type", 0); // 分享的类型  0：默认，图文分享；1：应用分享
-		String _title = _dictParas.getOneText("title", ""); //标题  分享的标题, 最长200个字符
-		String _targetUrl = _dictParas.getOneText("url", "");    //目标地址  分享后点击文本后打开的地址
-		String _imageUrl = _dictParas.getOneText("image", "");  //图片地址  分享后显示的图片
-		String _summary = _dictParas.getOneText("summary", "");   //摘要  分享的消息摘要，最长600个字
+		int _shareType = DoJsonHelper.getInt(_dictParas,"type", 0); // 分享的类型  0：默认，图文分享；1：应用分享
+		String _title = DoJsonHelper.getString(_dictParas,"title", ""); //标题  分享的标题, 最长200个字符
+		String _targetUrl = DoJsonHelper.getString(_dictParas,"url", "");    //目标地址  分享后点击文本后打开的地址
+		String _imageUrl = DoJsonHelper.getString(_dictParas,"image", "");  //图片地址  分享后显示的图片
+		String _summary = DoJsonHelper.getString(_dictParas,"summary", "");   //摘要  分享的消息摘要，最长600个字
 		
 		if(TextUtils.isEmpty(_title)){
 			_title = "share title";
