@@ -254,7 +254,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		String _targetUrl = DoJsonHelper.getString(_dictParas,"url", "");    //目标地址  分享后点击文本后打开的地址
 		String _imageUrl = DoJsonHelper.getString(_dictParas,"image", "");  //图片地址  分享后显示的图片
 		String _summary = DoJsonHelper.getString(_dictParas,"summary", "");   //摘要  分享的消息摘要，最长40个字
-		String _audioUrl = DoJsonHelper.getString(_dictParas,"audioUrl", "");  //音乐文件的远程链接   音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
+		String _audioUrl = DoJsonHelper.getString(_dictParas,"audio", "");  //音乐文件的远程链接   音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
 		String _appName = DoJsonHelper.getString(_dictParas,"appName", "");    //应用名称
 		
 		if(TextUtils.isEmpty(_title)){
