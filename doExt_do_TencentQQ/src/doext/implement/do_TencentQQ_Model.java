@@ -39,15 +39,16 @@ import doext.define.do_TencentQQ_IMethod;
  */
 public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQQ_IMethod, DoActivityResultListener {
 	private Tencent mTencent;
-	private DoIPageView activity;
+	private DoIPageView doActivity;
 	private DoIScriptEngine doIScriptEngine;
 	private String callbackFuncName;
 	private DoActivityResultListener activityResultListener;
-
+	private Activity  activity ;
 	public do_TencentQQ_Model() throws Exception {
 		super();
 		do_TencentQQ_App.getInstance().setModuleTypeID(getTypeID());
 		activityResultListener = this;
+		activity = DoServiceContainer.getPageViewFactory().getAppContext();
 	}
 
 	/**
@@ -173,6 +174,10 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	@Override
 	public void login(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
 		String _appId = DoJsonHelper.getString(_dictParas, "appId", "");
+		doActivity = _scriptEngine.getCurrentPage().getPageView();
+		doActivity.registActivityResultListener(this);
+		doIScriptEngine = _scriptEngine;
+		callbackFuncName = _callbackFuncName;
 		if (TextUtils.isEmpty(_appId))
 			throw new Exception("appId 不能为空");
 		Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
@@ -205,6 +210,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 
 		@Override
 		public void onComplete(Object response) {
+
 			if (null == response) {
 				Toast.makeText(activity, "登录失败", Toast.LENGTH_SHORT).show();
 				return;
@@ -216,6 +222,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 			}
 			invokeResult.setResultText(jsonResponse.toString());
 			scriptEngine.callback(callbackFuncName, invokeResult);
+			doActivity.unregistActivityResultListener(activityResultListener);
 		}
 
 		@Override
@@ -249,8 +256,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 
 	@Override
 	public void shareToQQ(JSONObject _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
-		activity = _scriptEngine.getCurrentPage().getPageView();
-		activity.registActivityResultListener(this);
+		doActivity = _scriptEngine.getCurrentPage().getPageView();
+		doActivity.registActivityResultListener(this);
 		String _appId = DoJsonHelper.getString(_dictParas, "appId", "");
 		if (TextUtils.isEmpty(_appId))
 			throw new Exception("appId 不能为空");
@@ -364,7 +371,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 
 			invokeResult.setResultBoolean(true);
 			scriptEngine.callback(callbackFuncName, invokeResult);
-			activity.unregistActivityResultListener(activityResultListener);
+			doActivity.unregistActivityResultListener(activityResultListener);
 		}
 
 		@Override
@@ -376,8 +383,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 
 	@Override
 	public void shareToQzone(JSONObject _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
-		activity = _scriptEngine.getCurrentPage().getPageView();
-		activity.registActivityResultListener(this);
+		doActivity = _scriptEngine.getCurrentPage().getPageView();
+		doActivity.registActivityResultListener(this);
 		doIScriptEngine = _scriptEngine;
 		callbackFuncName = _callbackFuncName;
 		String _appId = DoJsonHelper.getString(_dictParas, "appId", "");
@@ -437,6 +444,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 			Tencent.onActivityResultData(requestCode, resultCode, intent, new QQShareListener(doIScriptEngine, callbackFuncName));
 		} else if (requestCode == Constants.REQUEST_QZONE_SHARE) {
 			Tencent.onActivityResultData(requestCode, resultCode, intent, new QQShareListener(doIScriptEngine, callbackFuncName));
+		} else if (requestCode == Constants.REQUEST_LOGIN || requestCode == Constants.REQUEST_APPBAR) {
+			Tencent.onActivityResultData(requestCode, resultCode, intent, new MyLoginListener(activity, doIScriptEngine, callbackFuncName));
 		}
 	}
 }
