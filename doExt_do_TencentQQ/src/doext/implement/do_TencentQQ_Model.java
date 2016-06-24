@@ -25,6 +25,7 @@ import core.helper.DoJsonHelper;
 import core.interfaces.DoActivityResultListener;
 import core.interfaces.DoIPageView;
 import core.interfaces.DoIScriptEngine;
+import core.interfaces.DoISourceFS;
 import core.object.DoInvokeResult;
 import core.object.DoSingletonModule;
 import doext.app.do_TencentQQ_App;
@@ -43,7 +44,8 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 	private DoIScriptEngine doIScriptEngine;
 	private String callbackFuncName;
 	private DoActivityResultListener activityResultListener;
-	private Activity  activity ;
+	private Activity activity;
+
 	public do_TencentQQ_Model() throws Exception {
 		super();
 		do_TencentQQ_App.getInstance().setModuleTypeID(getTypeID());
@@ -256,6 +258,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 
 	@Override
 	public void shareToQQ(JSONObject _dictParas, final DoIScriptEngine _scriptEngine, final String _callbackFuncName) throws Exception {
+
 		doActivity = _scriptEngine.getCurrentPage().getPageView();
 		doActivity.registActivityResultListener(this);
 		String _appId = DoJsonHelper.getString(_dictParas, "appId", "");
@@ -270,6 +273,13 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		String _title = DoJsonHelper.getString(_dictParas, "title", ""); //标题  分享的标题, 最长30个字符
 		String _targetUrl = DoJsonHelper.getString(_dictParas, "url", ""); //目标地址  分享后点击文本后打开的地址
 		String _imageUrl = DoJsonHelper.getString(_dictParas, "image", ""); //图片地址  分享后显示的图片
+		if (TextUtils.isEmpty(_imageUrl)) {
+			throw new Exception("image不能为空!");
+		}
+		if (!_imageUrl.startsWith(DoISourceFS.DATA_PREFIX)) {
+			throw new Exception("image参数只支持" + DoISourceFS.DATA_PREFIX + " 打头!");
+		}
+
 		String _summary = DoJsonHelper.getString(_dictParas, "summary", ""); //摘要  分享的消息摘要，最长40个字
 		String _audioUrl = DoJsonHelper.getString(_dictParas, "audio", ""); //音乐文件的远程链接   音乐文件的远程链接, 以URL的形式传入, 不支持本地音乐
 		String _appName = DoJsonHelper.getString(_dictParas, "appName", ""); //应用名称
