@@ -273,7 +273,6 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		String _title = DoJsonHelper.getString(_dictParas, "title", ""); //标题  分享的标题, 最长30个字符
 		String _targetUrl = DoJsonHelper.getString(_dictParas, "url", ""); //目标地址  分享后点击文本后打开的地址
 		String _imageUrl = DoJsonHelper.getString(_dictParas, "image", ""); //图片地址  分享后显示的图片
-		//添加判断是否为DATA_PREFIX
 		if (TextUtils.isEmpty(_imageUrl)) {
 			throw new Exception("image不能为空!");
 		}
