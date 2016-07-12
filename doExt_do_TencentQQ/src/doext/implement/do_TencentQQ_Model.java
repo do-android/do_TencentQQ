@@ -114,7 +114,7 @@ public class do_TencentQQ_Model extends DoSingletonModule implements do_TencentQ
 		String _expires = DoJsonHelper.getString(_dictParas, "expires", "");
 		String _openId = DoJsonHelper.getString(_dictParas, "openId", "");
 		Activity _activity = DoServiceContainer.getPageViewFactory().getAppContext();
-		if (mTencent != null && mTencent.isSessionValid() && !TextUtils.isEmpty(_token) && !TextUtils.isEmpty(_expires) && !TextUtils.isEmpty(_openId)) {
+		if (mTencent != null && !mTencent.isSessionValid() && !TextUtils.isEmpty(_token) && !TextUtils.isEmpty(_expires) && !TextUtils.isEmpty(_openId)) {
 			mTencent.setAccessToken(_token, _expires);
 			mTencent.setOpenId(_openId);
 			UserInfo mInfo = new UserInfo(_activity, mTencent.getQQToken());
